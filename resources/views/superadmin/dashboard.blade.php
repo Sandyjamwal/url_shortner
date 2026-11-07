@@ -4,6 +4,9 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
     <div class="container m-5">
         <div class="heading d-flex justify-content-between align-items-center">
@@ -14,31 +17,33 @@
         <table class="table">
             <thead>
                 <tr>
-                <th scope="col">#</th>
-                <th scope="col">First</th>
-                <th scope="col">Last</th>
-                <th scope="col">Handle</th>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                <th scope="row">1</th>
-                <td>Mark</td>
-                <td>Otto</td>
-                <td>@mdo</td>
-                </tr>
-                <tr>
-                <th scope="row">2</th>
-                <td>Jacob</td>
-                <td>Thornton</td>
-                <td>@fat</td>
-                </tr>
-                <tr>
-                <th scope="row">3</th>
-                <td>John</td>
-                <td>Doe</td>
-                <td>@social</td>
-                </tr>
+                @forelse($invitations as $invitation)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $invitation->name }}</td>
+                        <td>{{ $invitation->email }}</td>
+                        <td>
+                            @if($invitation->accepted_at)
+                                <span class="badge bg-success">Accepted</span>
+                            @elseif($invitation->expires_at->isPast())
+                                <span class="badge bg-secondary">Expired</span>
+                            @else
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center">No Data Found</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
         </div>
@@ -54,14 +59,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-               <form>
+               <form method="POST" action="{{ route('invitations.store') }}">
+                 @csrf
                  <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" aria-describedby="emailHelp">
+                        <input type="text" class="form-control" name="name" id="name">
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="email" aria-describedby="emailHelp">
+                        <input type="email" class="form-control" id="email" name ='email'>
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     <button type="submit" class="btn btn-primary">Invite</button>
                 </form>
@@ -69,4 +81,11 @@
             </div>
         </div>
     </div>
+    @if($errors->any())
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new bootstrap.Modal(document.getElementById('invite_clients')).show();
+        });
+    </script>
+    @endif
 </x-app-layout>
